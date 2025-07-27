@@ -4,14 +4,17 @@ let tracker = database.where("name", "tracker").first();
 if (!tracker) {
   database.save({
     name: "tracker",
-    data: [
-      {
-        name: "count",
-        value: 0,
-      },
-    ],
+    data: [{}],
   });
   tracker = database.where("name", "tracker").first();
+}
+
+function uuidv4() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 const app = new Vue({
@@ -24,18 +27,22 @@ const app = new Vue({
   watch: {
     tracker: {
       handler(newValue, oldValue) {
-        database.update(this.$data.tracker);
+        database.update(this.tracker);
       },
       deep: true,
     },
   },
   methods: {
-    buildDataPoint() {
+    createDataPoint() {
       const dataPoint = {
         name: "New Data Point",
         value: 0,
+        id: uuidv4(),
       };
       this.tracker.data.push(dataPoint);
+    },
+    deleteDataPoint(id) {
+      this.tracker.data = this.tracker.data.filter((item) => item.id !== id);
     },
   },
   beforeMount() {
