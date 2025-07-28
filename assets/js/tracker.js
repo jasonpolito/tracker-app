@@ -1,6 +1,11 @@
 const SETTINGS = {
   editing: null,
   data: [],
+  modals: {
+    create: {
+      open: false,
+    },
+  },
 };
 
 let tracker = window.localStorage.getItem("appData");
@@ -37,31 +42,52 @@ const app = new Vue({
       deep: true,
     },
   },
+  computed: {
+    backdropBlur() {
+      return this.editing !== null || this.modals.create.open;
+    },
+  },
   methods: {
-    createDataPoint() {
-      const dataPoint = {
-        name: `New Data Point ${this.tracker.data.length + 1}`,
-        value: 0,
-        id: uuidv4(),
+    utils() {
+      // this.tracker.data.push(dataPoint);
+      return {
+        createPoint: () => {
+          this.openModal("create");
+          const dataPoint = {
+            name: `New Data Point ${this.tracker.data.length + 1}`,
+            value: 0,
+            id: uuidv4(),
+          };
+          this.tracker.data.push(dataPoint);
+        },
+        duplicatePoint: (id) => {
+          const item = this.tracker.data.find((item) => item.id === id);
+          if (item) {
+            const newItem = {
+              ...item,
+              name: `${item.name} (Copy)`,
+              id: uuidv4(),
+            };
+            // insert new item after the original
+            const index = this.tracker.data.findIndex((i) => i.id === id);
+            if (index !== -1) {
+              this.tracker.data.splice(index + 1, 0, newItem);
+            } else {
+              this.tracker.data.push(newItem);
+            }
+            this.editing = newItem.id;
+          }
+        },
+        deletePoint: (id) => {
+          this.editing = null;
+          this.tracker.data = this.tracker.data.filter(
+            (item) => item.id !== id
+          );
+        },
       };
-      this.tracker.data.push(dataPoint);
     },
-    duplicateDataPoint(id) {
-      const item = this.tracker.data.find((item) => item.id === id);
-      if (item) {
-        const newItem = { ...item, name: `${item.name} (Copy)`, id: uuidv4() };
-        // insert new item after the original
-        const index = this.tracker.data.findIndex((i) => i.id === id);
-        if (index !== -1) {
-          this.tracker.data.splice(index + 1, 0, newItem);
-        } else {
-          this.tracker.data.push(newItem);
-        }
-        this.editing = newItem.id;
-      }
-    },
-    deleteDataPoint(id) {
-      this.tracker.data = this.tracker.data.filter((item) => item.id !== id);
+    openModal(modalName) {
+      this.modals[modalName].open = true;
     },
   },
   beforeMount() {
